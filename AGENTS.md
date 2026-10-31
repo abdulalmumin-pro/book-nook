@@ -13,7 +13,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 "book-nook" — an online book library (assignment app). Single package (npm, `package-lock.json`); not a monorepo. App Router under `src/app/`, all app code in `src/`.
 
 - Stack: Next.js **16.4.3** (React 19.3, TS strict, Turbopack), Tailwind CSS **v4**, shadcn `base-nova` components, Swiper (hero slider), mongoose.
-- Routes that exist: `/`, `/books`, `/add-books`. The navbar also links `/my-books`, `/my-borrows`, `/login`, `/register` — **those pages don't exist yet** (placeholder links → 404).
+- Routes that exist: `/`, `/books`, `/books/[id]`, `/add-books`. The navbar also links `/my-books`, `/my-borrows`, `/login`, `/register` — **those pages don't exist yet** (placeholder links → 404).
 
 ## Two data sources — don't mix them up
 

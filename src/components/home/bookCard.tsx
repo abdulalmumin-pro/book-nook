@@ -96,7 +96,7 @@ const BookCard = ({ book, showMeta = true }: BookCardProps) => {
         {/* View Details Button */}
         <div className="mt-4">
           <Link
-            href={`/all-books/${book._id}`}
+            href={`/books/${book._id}`}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#174c3c] to-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:from-emerald-700 hover:to-[#174c3c] hover:shadow-md active:scale-[0.98]"
           >
             View Details

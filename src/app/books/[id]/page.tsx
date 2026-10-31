@@ -1,23 +1,40 @@
-import Image from "next/image";
+import { Suspense } from "react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import BookDetails from "@/components/books/book-details";
+import { BookDetailsSkeleton } from "@/components/books/book-details-skeleton";
+
+// This route renders live per-book data (no static shell is possible), so it
+// blocks at request time instead of being force-prerendered. That also lets the
+// root layout's <SiteHeader> (which reads usePathname) render with the real URL.
+export const instant = false;
 
 type Props = {
-    params: Promise<{
-        id: string;
-    }>;
+  params: Promise<{
+    id: string;
+  }>;
 };
 
-const BooksDetailsPage = async ({ params }: Props) => {
-    const { id } = await params;
-    
-    const res = await fetch (`http://localhost:7000/books/${id}`);
-    const book = await res.json();
+const BooksDetailsPage = ({ params }: Props) => {
+  return (
+    <main className="min-h-screen bg-[#f8f7f2]">
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+        <Link
+          href="/books"
+          className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[#245b43] transition-colors hover:text-emerald-700"
+        >
+          <ArrowLeft className="size-4" aria-hidden />
+          Back to All Books
+        </Link>
 
-
-    return (
-        <div>
-           <Image src={book.image} alt="bookImg" width={200} height={200}/>
-        </div>
-    );
+        {/* params and the fetch are awaited inside this boundary so the shell
+            prerenders and the details stream in (cacheComponents rule). */}
+        <Suspense fallback={<BookDetailsSkeleton />}>
+          <BookDetails params={params} />
+        </Suspense>
+      </div>
+    </main>
+  );
 };
 
 export default BooksDetailsPage;
