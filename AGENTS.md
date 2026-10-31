@@ -10,24 +10,38 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Project
 
-"book-nook" — an online book library. Currently a fresh `create-next-app` scaffold: the starter page in `src/app/page.tsx` has not been replaced yet. Single package (npm, `package-lock.json`); not a monorepo.
+"book-nook" — an online book library (assignment app). Single package (npm, `package-lock.json`); not a monorepo. App Router under `src/app/`, all app code in `src/`.
 
-- Entrypoint: App Router under `src/app/` (`layout.tsx`, `page.tsx`). All app code lives in `src/`.
-- Stack: Next.js **16.4.3**, React 19.3, TypeScript strict, Tailwind CSS **v4**, shadcn components.
+- Stack: Next.js **16.4.3** (React 19.3, TS strict, Turbopack), Tailwind CSS **v4**, shadcn `base-nova` components, Swiper (hero slider), mongoose.
+- Routes that exist: `/`, `/books`, `/add-books`. The navbar also links `/my-books`, `/my-borrows`, `/login`, `/register` — **those pages don't exist yet** (placeholder links → 404).
+
+## Two data sources — don't mix them up
+
+- **External Express backend at `http://localhost:7000` (not in this repo)**: `GET /books`, `POST /add-books` (JSON). Used by `src/app/books/page.tsx` and the add-books form. It may not be running — consumers wrap fetches in try/catch and fall back to an empty state or toast instead of crashing; keep that pattern. Book shape: `_id, title, author, category, description, image (URL), totalCopies, userName, userEmail`.
+- **Mongoose layer in this repo** (`src/lib/mongodb.ts`, `src/models/book.ts`, `src/lib/books.ts`): used only by the home page's New Arrivals. Needs `MONGODB_URI` in `.env.local` (copy `.env.example`); returns `[]` with a warning when unset or unreachable.
 
 ## Commands
 
 - Dev: `npm run dev` (Turbopack)
-- Lint: `npm run lint` (eslint only — there is no test or typecheck script)
-- Typecheck: `npx tsc --noEmit` (or rely on `npm run build`, which typechecks)
+- Verify: `npm run lint` → `npx tsc --noEmit` → `npm run build`. There is **no test or typecheck script** (`npm test` will fail); `build` also typechecks and is the only check that exercises prerendering.
 
 ## Framework quirks that will bite you
 
-- `next.config.ts` enables `cacheComponents: true` and `partialPrefetching: true`. These change data-fetching/caching conventions (no `export const dynamic`, "use cache" directives, etc.). Read `node_modules/next/dist/docs/01-app/01-getting-started/08-caching.md` and the `*-with-cache-components` guides before writing any data fetching or route segment config.
+- `next.config.ts` enables `cacheComponents: true` and `partialPrefetching: true`. These change data-fetching/caching conventions (no `export const dynamic`, "use cache" directives, etc.). Read `node_modules/next/dist/docs/01-app/01-getting-started/08-caching.md` before writing any data fetching or route segment config.
+- **`next build` fails** on "unstable value `new Date()`" / "blocking-prerender" when a page does an uncached fetch or DB read, or reads the clock, without either a `<Suspense>` boundary or `"use cache"`. Existing fixes you must preserve: the footer caches its copyright year with `"use cache"`; the hero slider (Swiper calls `new Date()` internally) and New Arrivals are wrapped in `<Suspense>` in `src/app/page.tsx`. Any new data-reading component needs a `<Suspense>` fallback in the page that renders it.
 - `reactCompiler: true` (React Compiler) is enabled — do not add manual `memo`/`useMemo`/`useCallback` optimization.
-- Tailwind v4 with **no `tailwind.config`**: theme is CSS-first in `src/app/globals.css` (`@theme inline` + shadcn CSS variables). The CSS pipeline is wired via the `@tailwindcss/turbopack` loader rule in `next.config.ts`; don't re-add a Tailwind config file.
-- shadcn style is `base-nova`, which is built on **`@base-ui/react`, not Radix**. `src/components/ui/` already contains ~60 generated components; prefer those and add more with `npx shadcn add <component>` (config in `components.json`) rather than hand-writing primitives.
+- **`next/image` only works for hosts allowlisted** in `next.config.ts` → `images.remotePatterns` (Amazon/Unsplash/Open Library/etc. already listed). Book covers come from arbitrary CDNs: add the hostname there instead of falling back to bare `<img>`.
+- Tailwind v4 with **no `tailwind.config`**: theme is CSS-first in `src/app/globals.css` (`@theme inline` + shadcn CSS variables). The pipeline is wired via the `@tailwindcss/turbopack` loader rule in `next.config.ts`.
+- shadcn style is `base-nova`, which is built on **`@base-ui/react`, not Radix**. `src/components/ui/` has ~60 generated components; prefer those and add more with `npx shadcn add <component>`. API traps:
+  - Render a Button as a link with Base UI's prop: `<Button render={<Link href="/books" />}>`.
+  - Toasts: `toast.add({ type: "success" | "error", title, description })` from `@/components/ui/toast`; `<Toaster />` is already mounted in the root layout. There is no `useToast()`/`toast()` helper.
+  - `cn` is tailwind-merge-backed, so later className overrides win (e.g. `cn(buttonVariants(...), "bg-emerald-600")` replaces the variant color).
 - Path alias `@/*` → `src/*` (see `tsconfig.json` and `components.json`).
+
+## Conventions
+
+- `/books` uses a **hardcoded warm palette** (`#244536`, `#f8f7f2`, `#b58b52` …) instead of shadcn tokens; other pages use theme tokens. Match the palette of the page you're editing.
+- The book card lives in `src/components/home/bookCard.tsx` (default export `BookCard`, exports `type Book`) and is imported by `/books` despite the `home/` folder.
 
 ## Keeping the tree clean
 

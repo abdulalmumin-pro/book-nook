@@ -1,14 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import BookCard from "@/components/home/bookCard";
 import { getLatestBooks } from "@/lib/books";
 
 export async function NewArrivals() {
@@ -17,50 +10,20 @@ export async function NewArrivals() {
   return (
     <>
       {books.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed px-6 py-16 text-center">
-          <p className="font-medium">No books in the library yet.</p>
-          <p className="text-sm text-muted-foreground">
-            Add your first book and it will show up here automatically.
+        <div className="rounded-2xl border border-dashed border-[#d8d2c4] bg-white px-6 py-16 text-center">
+          <h3 className="text-2xl font-bold text-[#244536]">
+            No Books Found!
+          </h3>
+          <p className="mt-2 text-gray-500">
+            There are no books available in the library right now.
           </p>
         </div>
       ) : (
-        <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
           {books.map((book) => (
-            <li key={book.id} className="h-full">
-              <Card className="h-full transition-shadow hover:shadow-md">
-                <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted">
-                  <Image
-                    src={book.image}
-                    alt={`Cover of ${book.title}`}
-                    fill
-                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                    className="object-cover"
-                  />
-                </div>
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="line-clamp-2">
-                      {book.title}
-                    </CardTitle>
-                    <Badge variant="secondary">{book.category}</Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    by {book.author}
-                  </p>
-                </CardHeader>
-                <CardContent className="mt-auto">
-                  <Button
-                    className="w-full"
-                    render={<Link href={`/books/${book.id}`} />}
-                  >
-                    View Details
-                    <ArrowRight data-icon="inline-end" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </li>
+            <BookCard key={book._id} book={book} showMeta={false} />
           ))}
-        </ul>
+        </div>
       )}
 
       <div className="mt-10 flex justify-center">

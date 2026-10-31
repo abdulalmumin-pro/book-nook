@@ -7,6 +7,9 @@ const BookSchema = new Schema(
     category: { type: String, required: true, trim: true },
     image: { type: String, required: true },
     description: { type: String, default: "" },
+    totalCopies: { type: String, default: "1" },
+    userName: { type: String, default: "" },
+    userEmail: { type: String, default: "" },
   },
   { timestamps: true } // adds createdAt / updatedAt
 );

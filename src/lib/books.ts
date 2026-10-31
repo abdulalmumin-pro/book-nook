@@ -1,12 +1,17 @@
 import { connectDB } from "@/lib/mongodb";
 import { Book } from "@/models/book";
 
+/** Full book shape required by the BookCard component. */
 export interface BookCardData {
-  id: string;
+  _id: string;
   title: string;
   author: string;
   category: string;
   image: string;
+  description: string;
+  totalCopies: string;
+  userName: string;
+  userEmail: string;
 }
 
 /**
@@ -23,15 +28,28 @@ export async function getLatestBooks(limit = 6): Promise<BookCardData[]> {
     const books = await Book.find()
       .sort({ createdAt: -1 }) // newest first
       .limit(limit)
-      .select({ title: 1, author: 1, category: 1, image: 1 })
+      .select({
+        title: 1,
+        author: 1,
+        category: 1,
+        image: 1,
+        description: 1,
+        totalCopies: 1,
+        userName: 1,
+        userEmail: 1,
+      })
       .lean();
 
     return books.map((book) => ({
-      id: String(book._id),
+      _id: String(book._id),
       title: book.title,
       author: book.author,
       category: book.category,
       image: book.image,
+      description: book.description ?? "",
+      totalCopies: book.totalCopies != null ? String(book.totalCopies) : "1",
+      userName: book.userName ?? "",
+      userEmail: book.userEmail ?? "",
     }));
   } catch (error) {
     console.error("[books] Failed to load latest books:", error);
