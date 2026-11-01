@@ -27,6 +27,46 @@ const categories = [
 const fieldFocus =
   "focus-visible:border-emerald-500 focus-visible:ring-emerald-500/40";
 
+/** Trim, collapse whitespace, and lowercase for case/space-insensitive compare. */
+function normalizeText(value: unknown): string {
+  return String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+interface BookFields {
+  title?: unknown;
+  author?: unknown;
+  category?: unknown;
+  description?: unknown;
+  image?: unknown;
+  totalCopies?: unknown;
+  userName?: unknown;
+  userEmail?: unknown;
+}
+
+/**
+ * Canonical key for a full book record. Two records are "the same entry" only
+ * when every field matches — so the same title/author can be added again as
+ * more copies (different totalCopies or user), but an identical record is
+ * caught as a duplicate.
+ */
+function recordKey(record: BookFields): string {
+  const copies = Number(record.totalCopies);
+  return [
+    normalizeText(record.title),
+    normalizeText(record.author),
+    normalizeText(record.category),
+    normalizeText(record.description),
+    // URLs: trim only — path segments are case-sensitive.
+    String(record.image ?? "").trim(),
+    Number.isFinite(copies) ? String(copies) : normalizeText(record.totalCopies),
+    normalizeText(record.userName),
+    normalizeText(record.userEmail),
+  ].join("|");
+}
+
 function Field({
   label,
   htmlFor,
@@ -56,43 +96,46 @@ export default function AddBooksPage() {
     // TODO: send `data` to an API route / server action that saves the book
     // to MongoDB (file upload will need multipart/form-data handling).
 
-    const title = String(form.title ?? "").trim();
+    // The backend doesn't enforce uniqueness, so compare the full record
+    // against the library first. The same book (title/author) may be added
+    // again as more copies — only an identical record is refused.
+    const newEntryKey = recordKey({
+      title: form.title,
+      author: form.author,
+      category: form.category,
+      description: form.description,
+      image: form.image,
+      totalCopies: form.totalCopies,
+      userName: form.userName,
+      userEmail: form.userEmail,
+    });
 
-    // The backend doesn't enforce uniqueness, so check the library first and
-    // refuse to add a second copy of a book that's already there.
-    if (title) {
-      try {
-        const res = await fetch("http://localhost:7000/books", {
-          cache: "no-store",
-        });
+    try {
+      const res = await fetch("http://localhost:7000/books", {
+        cache: "no-store",
+      });
 
-        if (res.ok) {
-          const data = await res.json();
-          const books: unknown[] = Array.isArray(data)
-            ? data
-            : (data?.books ?? []);
-          const normalized = title.toLowerCase();
-          const exists = books.some(
-            (book) =>
-              String((book as { title?: string })?.title ?? "")
-                .trim()
-                .toLowerCase() === normalized
-          );
+      if (res.ok) {
+        const data = await res.json();
+        const books: unknown[] = Array.isArray(data) ? data : (data?.books ?? []);
+        const isDuplicate = books.some(
+          (book) => recordKey(book as BookFields) === newEntryKey
+        );
 
-          if (exists) {
-            toast.add({
-              type: "error",
-              title: "Book already exists",
-              description: `"${title}" is already in the library.`,
-            });
-            return;
-          }
+        if (isDuplicate) {
+          toast.add({
+            type: "error",
+            title: "Duplicate entry",
+            description:
+              "This exact entry is already in the library. To add copies, change the number of copies (or another detail).",
+          });
+          return;
         }
-      } catch (error) {
-        // Couldn't verify duplicates — proceed and let the POST report its
-        // own success or failure.
-        console.error("Duplicate check failed:", error);
       }
+    } catch (error) {
+      // Couldn't verify duplicates — proceed and let the POST report its own
+      // success or failure.
+      console.error("Duplicate check failed:", error);
     }
 
     try {
