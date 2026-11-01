@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { Button } from "@/app/components/ui/button";
+import BorrowBookDialog from "@/app/components/books/borrow-book-dialog";
 import type { Book } from "@/app/components/home/bookCard";
 
 function NotFoundPanel({ message }: { message: string }) {
@@ -127,13 +127,7 @@ async function BookDetails({
 
           {/* Borrow */}
           <div className="mt-6">
-            {/* TODO: wire this up to the borrow system when it's built. */}
-            <Button
-              size="lg"
-              className="w-full bg-gradient-to-r from-[#174c3c] to-emerald-700 text-white hover:from-emerald-700 hover:to-[#174c3c] md:w-auto"
-            >
-              Borrow This Book
-            </Button>
+            <BorrowBookDialog book={book} />
           </div>
         </div>
       </div>

@@ -13,7 +13,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 "book-nook" — an online book library (assignment app). Single package (npm, `package-lock.json`); not a monorepo. App Router under `src/app/`, all app code in `src/`.
 
 - Stack: Next.js **16.4.3** (React 19.3, TS strict, Turbopack), Tailwind CSS **v4**, shadcn `base-nova` components, Swiper (hero slider), mongoose, better-auth.
-- Routes that exist: `/`, `/books`, `/books/[id]`, `/add-books`, `/sign-in`, `/sign-up`. `/my-books` and `/my-borrows` are placeholder stubs. The header's **mobile** menu also links `/login` and `/register` — those pages don't exist (desktop uses `/sign-in`/`/sign-up`).
+- Routes that exist: `/`, `/books`, `/books/[id]`, `/add-books`, `/my-borrows`, `/sign-in`, `/sign-up`. `/my-books` is still a placeholder stub. Both the desktop nav and the mobile menu link `/sign-in`/`/sign-up` (there are no `/login` or `/register` pages).
 
 ## Two data sources — don't mix them up
 
@@ -36,12 +36,14 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   - Render a Button as a link with Base UI's prop: `<Button render={<Link href="/books" />}>`.
   - Toasts: `toast.add({ type: "success" | "error", title, description })` from `@/app/components/ui/toast`; `<Toaster />` is already mounted in the root layout. There is no `useToast()`/`toast()` helper.
   - `cn` is tailwind-merge-backed, so later className overrides win (e.g. `cn(buttonVariants(...), "bg-emerald-600")` replaces the variant color).
+  - **Two `cn` sources coexist**: generated ui components do `import { cn } from "cn"` (the npm package), while hand-written app code (site-header, add-books, hero-slider) does `import { cn } from "@/lib/utils"`. Match whichever the surrounding file already uses.
 - Path alias `@/*` → `src/*` (see `tsconfig.json`), so the repo's own components import as `@/app/components/...`.
 
 ## Conventions
 
 - `/books` and `/books/[id]` use a **hardcoded warm palette** (`#244536`, `#f8f7f2`, `#b58b52` …) instead of shadcn tokens; other pages use theme tokens. Match the palette of the page you're editing.
 - The book card lives in `src/app/components/home/bookCard.tsx` (default export `BookCard`, exports `type Book`) and is imported by `/books` despite the `home/` folder.
+- Borrows are wired through a **client-side localStorage store** (`src/lib/borrows.ts`), not a backend endpoint (the Express server has no borrow route). `src/app/components/books/borrow-book-dialog.tsx` writes a `BorrowRecord` on confirm; `src/app/components/borrows/my-borrows-list.tsx` reads rows for the signed-in user and syncs via the `BORROWS_CHANGED_EVENT` window event. `/my-books` is still a placeholder stub.
 - `src/lib/auth-client.ts` creates the configured client (`authClient`, reads `process.env.BETTER_AUTH_URL`) but exports `signIn/signUp/useSession` from a second, unconfigured `createAuthClient()` — mind which you import.
 
 ## Keeping the tree clean

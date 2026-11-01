@@ -50,55 +50,6 @@ export function SiteHeader() {
     router.refresh();
   };
 
-  const renderSignedInPills = (className?: string) => (
-    <div className={cn("flex items-center gap-3 sm:gap-2", className)}>
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-          aria-label="Open profile menu"
-        >
-          <Avatar size="lg">
-            <AvatarFallback>{getInitial(user?.name)}</AvatarFallback>
-          </Avatar>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-56">
-          <DropdownMenuGroup>
-            <DropdownMenuLabel className="flex flex-col gap-0.5">
-              <span className="text-sm font-semibold text-foreground">
-                {user?.name ?? "Signed in user"}
-              </span>
-              <span className="max-w-52 truncate font-normal">
-                {user?.email}
-              </span>
-            </DropdownMenuLabel>
-            <DropdownMenuItem render={<Link href="/my-books" />}>
-              <UserRound />
-              My books
-            </DropdownMenuItem>
-            <DropdownMenuItem render={<Link href="/my-borrows" />}>
-              <BookOpen />
-              My borrows
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive" onClick={handleSignOut}>
-            <LogOut />
-            Sign out
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-  );
-
-  const renderSignedOutPills = (className?: string) => (
-    <div className={cn("flex items-center gap-2", className)}>
-      <Button variant="outline" render={<Link href="/sign-in" />}>
-        Sign in
-      </Button>
-      <Button render={<Link href="/sign-up" />}>Sign up</Button>
-    </div>
-  );
-
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
@@ -129,11 +80,54 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        {/* Desktop right side: avatar dropdown when signed in, buttons otherwise */}
+        {/* Signed in: avatar button that opens the profile dropdown.
+            Signed out: Sign in / Sign up buttons. */}
         <div className="hidden items-center gap-2 md:flex">
-          {sessionLoading ? null : user
-            ? renderSignedInPills()
-            : renderSignedOutPills()}
+          {sessionLoading ? null : user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                aria-label="Open profile menu"
+              >
+                <Avatar size="lg">
+                  <AvatarFallback>{getInitial(user?.name)}</AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-56">
+                {/* Base UI requires the GroupLabel to live inside a Group. */}
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="flex flex-col gap-0.5">
+                    <span className="text-sm font-semibold text-foreground">
+                      {user?.name ?? "Signed in user"}
+                    </span>
+                    <span className="max-w-52 truncate font-normal">
+                      {user?.email}
+                    </span>
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem render={<Link href="/my-books" />}>
+                    <UserRound />
+                    My books
+                  </DropdownMenuItem>
+                  <DropdownMenuItem render={<Link href="/my-borrows" />}>
+                    <BookOpen />
+                    My borrows
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem variant="destructive" onClick={handleSignOut}>
+                  <LogOut />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Button variant="outline" render={<Link href="/sign-in" />}>
+                Sign in
+              </Button>
+              <Button render={<Link href="/sign-up" />}>Sign up</Button>
+            </>
+          )}
         </div>
 
         <button
