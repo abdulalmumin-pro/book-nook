@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import BookCard, { type Book } from "@/components/home/bookCard";
+import BookCard, { type Book } from "@/app/components/home/bookCard";
 
 async function BooksGrid() {
   let books: Book[] = [];

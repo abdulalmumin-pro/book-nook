@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import BookDetails from "@/components/books/book-details";
-import { BookDetailsSkeleton } from "@/components/books/book-details-skeleton";
+import BookDetails from "@/app/components/books/book-details";
+import { BookDetailsSkeleton } from "@/app/components/books/book-details-skeleton";
 
 // This route renders live per-book data (no static shell is possible), so it
 // blocks at request time instead of being force-prerendered. That also lets the

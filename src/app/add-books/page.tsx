@@ -1,17 +1,17 @@
 "use client";
 
 import { useState, type FormEvent, type ReactNode } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
+import { Textarea } from "@/app/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { toast } from "@/components/ui/toast";
+} from "@/app/components/ui/select";
+import { toast } from "@/app/components/ui/toast";
 import { cn } from "@/lib/utils";
 
 const categories = [

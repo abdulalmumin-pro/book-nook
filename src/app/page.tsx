@@ -1,9 +1,9 @@
 import { Suspense } from "react";
-import { HeroSlider } from "@/components/home/hero-slider";
-import { HowBorrowingWorks } from "@/components/home/how-borrowing-works";
-import { NewArrivals } from "@/components/home/new-arrivals";
-import { NewArrivalsSkeleton } from "@/components/home/new-arrivals-skeleton";
-import { TopCategories } from "@/components/home/top-categories";
+import { HeroSlider } from "@/app/components/home/hero-slider";
+import { HowBorrowingWorks } from "@/app/components/home/how-borrowing-works";
+import { NewArrivals } from "@/app/components/home/new-arrivals";
+import { NewArrivalsSkeleton } from "@/app/components/home/new-arrivals-skeleton";
+import { TopCategories } from "@/app/components/home/top-categories";
 
 export default function Home() {
   return (
