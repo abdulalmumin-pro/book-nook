@@ -3,6 +3,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import BorrowBookDialog from "@/app/components/books/borrow-book-dialog";
 import type { Book } from "@/app/components/home/bookCard";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 function NotFoundPanel({ message }: { message: string }) {
   return (
@@ -30,7 +32,16 @@ async function BookDetails({
   let backendDown = false;
 
   try {
+    const jwtToken = await auth.api.getToken({
+      headers: await headers(),
+    })
+    const token = jwtToken?.token;
+    console.log(token);
+
     const res = await fetch(`http://localhost:7000/books/${id}`, {
+      headers: {
+        authorization: `Bearer ${token}`
+      },
       cache: "no-store",
     });
 
