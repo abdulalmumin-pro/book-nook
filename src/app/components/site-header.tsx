@@ -2,10 +2,21 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { BookOpen, Menu, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { BookOpen, LogOut, Menu, UserRound, X } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
 import { Button } from "@/app/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/app/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { authClient } from "@/lib/auth-client";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -21,9 +32,72 @@ function isActiveLink(pathname: string, href: string) {
     : pathname === href || pathname.startsWith(`${href}/`);
 }
 
+function getInitial(name: string | undefined) {
+  return name?.trim().charAt(0).toUpperCase() || "?";
+}
+
 export function SiteHeader() {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { data: session, isPending: sessionLoading } = authClient.useSession();
+  const user = session?.user;
+
+  const handleSignOut = async () => {
+    setMobileOpen(false);
+    await authClient.signOut();
+    router.replace("/");
+    router.refresh();
+  };
+
+  const renderSignedInPills = (className?: string) => (
+    <div className={cn("flex items-center gap-3 sm:gap-2", className)}>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          aria-label="Open profile menu"
+        >
+          <Avatar size="lg">
+            <AvatarFallback>{getInitial(user?.name)}</AvatarFallback>
+          </Avatar>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-56">
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className="flex flex-col gap-0.5">
+              <span className="text-sm font-semibold text-foreground">
+                {user?.name ?? "Signed in user"}
+              </span>
+              <span className="max-w-52 truncate font-normal">
+                {user?.email}
+              </span>
+            </DropdownMenuLabel>
+            <DropdownMenuItem render={<Link href="/my-books" />}>
+              <UserRound />
+              My books
+            </DropdownMenuItem>
+            <DropdownMenuItem render={<Link href="/my-borrows" />}>
+              <BookOpen />
+              My borrows
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem variant="destructive" onClick={handleSignOut}>
+            <LogOut />
+            Sign out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+
+  const renderSignedOutPills = (className?: string) => (
+    <div className={cn("flex items-center gap-2", className)}>
+      <Button variant="outline" render={<Link href="/sign-in" />}>
+        Sign in
+      </Button>
+      <Button render={<Link href="/sign-up" />}>Sign up</Button>
+    </div>
+  );
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -55,11 +129,11 @@ export function SiteHeader() {
           ))}
         </nav>
 
+        {/* Desktop right side: avatar dropdown when signed in, buttons otherwise */}
         <div className="hidden items-center gap-2 md:flex">
-          <Button variant="outline" render={<Link href="/sign-in" />}>
-            Sign in
-          </Button>
-          <Button render={<Link href="/sign-up" />}>Sign up</Button>
+          {sessionLoading ? null : user
+            ? renderSignedInPills()
+            : renderSignedOutPills()}
         </div>
 
         <button
@@ -100,23 +174,44 @@ export function SiteHeader() {
               </Link>
             ))}
           </div>
-          <div className="mt-3 flex gap-2">
-            <Button
-              variant="outline"
-              className="flex-1"
-              render={<Link href="/login" />}
-              onClick={() => setMobileOpen(false)}
-            >
-              Login
-            </Button>
-            <Button
-              className="flex-1"
-              render={<Link href="/register" />}
-              onClick={() => setMobileOpen(false)}
-            >
-              Register
-            </Button>
-          </div>
+
+          {user ? (
+            <div className="mt-3 flex items-center justify-between gap-2 px-1">
+              <div className="flex items-center gap-2">
+                <Avatar size="default">
+                  <AvatarFallback>{getInitial(user.name)}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">{user.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {user.email}
+                  </p>
+                </div>
+              </div>
+              <Button variant="outline" onClick={handleSignOut}>
+                <LogOut className="size-4" />
+                Sign out
+              </Button>
+            </div>
+          ) : (
+            <div className="mt-3 flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                render={<Link href="/sign-in" />}
+                onClick={() => setMobileOpen(false)}
+              >
+                Sign in
+              </Button>
+              <Button
+                className="flex-1"
+                render={<Link href="/sign-up" />}
+                onClick={() => setMobileOpen(false)}
+              >
+                Sign up
+              </Button>
+            </div>
+          )}
         </nav>
       )}
     </header>

@@ -30,6 +30,13 @@ export async function connectDB(): Promise<typeof mongoose> {
       serverSelectionTimeoutMS: 5000,
     });
   }
-  cache.conn = await cache.promise;
+  try {
+    cache.conn = await cache.promise;
+  } catch (error) {
+    // Drop the rejected promise so the next call can retry with a fresh
+    // connection (e.g. after fixing MONGODB_URI without a server restart).
+    cache.promise = null;
+    throw error;
+  }
   return cache.conn;
 }
