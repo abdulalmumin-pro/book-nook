@@ -43,6 +43,14 @@ const nextConfig: NextConfig = {
         pathname: "/my-bucket/**",
         search: "",
       },
+      {
+        // Book covers are submitted by users from arbitrary CDNs, so allow
+        // any https host. Without this, next/image throws a render-time
+        // crash for any host not listed above. Tradeoff: the image optimizer
+        // will proxy any https URL.
+        protocol: "https",
+        hostname: "**",
+      },
     ],
   },
 

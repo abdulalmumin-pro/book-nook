@@ -21,7 +21,7 @@ export async function NewArrivals() {
       ) : (
         <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
           {books.map((book) => (
-            <BookCard key={book._id} book={book} showMeta={false} />
+            <BookCard key={book._id} book={book} />
           ))}
         </div>
       )}

@@ -56,6 +56,45 @@ export default function AddBooksPage() {
     // TODO: send `data` to an API route / server action that saves the book
     // to MongoDB (file upload will need multipart/form-data handling).
 
+    const title = String(form.title ?? "").trim();
+
+    // The backend doesn't enforce uniqueness, so check the library first and
+    // refuse to add a second copy of a book that's already there.
+    if (title) {
+      try {
+        const res = await fetch("http://localhost:7000/books", {
+          cache: "no-store",
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const books: unknown[] = Array.isArray(data)
+            ? data
+            : (data?.books ?? []);
+          const normalized = title.toLowerCase();
+          const exists = books.some(
+            (book) =>
+              String((book as { title?: string })?.title ?? "")
+                .trim()
+                .toLowerCase() === normalized
+          );
+
+          if (exists) {
+            toast.add({
+              type: "error",
+              title: "Book already exists",
+              description: `"${title}" is already in the library.`,
+            });
+            return;
+          }
+        }
+      } catch (error) {
+        // Couldn't verify duplicates — proceed and let the POST report its
+        // own success or failure.
+        console.error("Duplicate check failed:", error);
+      }
+    }
+
     try {
       const response = await fetch('http://localhost:7000/add-books', {
         method: 'POST',
