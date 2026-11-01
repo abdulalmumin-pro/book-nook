@@ -12,13 +12,14 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 "book-nook" — an online book library (assignment app). Single package (npm, `package-lock.json`); not a monorepo. App Router under `src/app/`, all app code in `src/`.
 
-- Stack: Next.js **16.4.3** (React 19.3, TS strict, Turbopack), Tailwind CSS **v4**, shadcn `base-nova` components, Swiper (hero slider), mongoose, better-auth.
+- Stack: Next.js **16.4.3** (React 19.3, TS strict, Turbopack), Tailwind CSS **v4**, shadcn `base-nova` components, Swiper (hero slider), better-auth. (mongoose is in `package.json` but unused — see below.)
 - Routes that exist: `/`, `/books`, `/books/[id]`, `/add-books`, `/my-borrows`, `/sign-in`, `/sign-up`. `/my-books` is still a placeholder stub. Both the desktop nav and the mobile menu link `/sign-in`/`/sign-up` (there are no `/login` or `/register` pages).
 
 ## Two data sources — don't mix them up
 
-- **External Express backend at `http://localhost:7000` (not in this repo)**: `GET /books`, `GET /books/:id`, `POST /add-books` (JSON). Used by `src/app/books/page.tsx`, `src/app/components/books/book-details.tsx`, and the add-books form. It may not be running — consumers wrap fetches in try/catch and fall back to an empty state or toast instead of crashing; keep that pattern. Book shape: `_id, title, author, category, description, image (URL), totalCopies, userName, userEmail`.
-- **Mongoose layer in this repo** (`src/lib/mongodb.ts`, `src/models/book.ts`, `src/lib/books.ts`): used by the home page's New Arrivals and by better-auth (`src/lib/auth.ts`, MongoDB adapter, db name `book-nook`, email/password enabled). Needs `MONGODB_URI` in `.env.local` (copy `.env.example`); New Arrivals returns `[]` with a warning when unset or unreachable. Auth handler is mounted at `src/app/api/auth/[...all]/route.ts`; client helpers in `src/lib/auth-client.ts`.
+- **External Express backend at `http://localhost:7000` (not in this repo)**: `GET /books`, `GET /books/:id`, `POST /add-books` (JSON). All book UI reads it: the `/books` grid, `book-details.tsx`, the add-books form, **and the home page's New Arrivals** (`src/lib/books.ts` → `getLatestBooks()`). It may not be running — consumers wrap fetches in try/catch and fall back to an empty state or toast instead of crashing (`getLatestBooks()` logs and returns `[]`); keep that pattern. Book shape: `_id, title, author, category, description, image (URL), totalCopies, userName, userEmail`.
+- **MongoDB is only used by better-auth** (`src/lib/auth.ts`): native `MongoClient` + `mongodbAdapter` (not mongoose), db name `book-nook`, email/password enabled. Needs `MONGODB_URI` in `.env.local` (copy `.env.example`). Auth handler is mounted at `src/app/api/auth/[...all]/route.ts`; client helpers in `src/lib/auth-client.ts`.
+- **The mongoose layer is dead code**: `connectDB` (`src/lib/mongodb.ts`) and the model in `src/models/book.ts` have no importers. Don't wire new features into it, and don't assume book data lives in Mongo.
 
 ## Commands
 
@@ -28,7 +29,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## Framework quirks that will bite you
 
 - `next.config.ts` enables `cacheComponents: true` and `partialPrefetching: true`. These change data-fetching/caching conventions (no `export const dynamic`, "use cache" directives, `export const instant = false` for request-time blocking — see `src/app/books/[id]/page.tsx`). Read `node_modules/next/dist/docs/01-app/01-getting-started/08-caching.md` before writing any data fetching or route segment config.
-- **`next build` fails** on "unstable value `new Date()`" / "blocking-prerender" when a page does an uncached fetch or DB read, or reads the clock, without either a `<Suspense>` boundary or `"use cache"`. Existing fixes you must preserve: the footer caches its copyright year with `"use cache"`; the hero slider (Swiper calls `new Date()` internally), New Arrivals, and `/books` grids are wrapped in `<Suspense>`. Any new data-reading component needs a `<Suspense>` fallback in the page that renders it.
+- **`next build` fails** on "unstable value `new Date()`" / "blocking-prerender" when a page does an uncached fetch or DB read, or reads the clock, without either a `<Suspense>` boundary or `"use cache"`. Existing fixes you must preserve: the footer caches its copyright year with `"use cache"`; the hero slider (Swiper calls `new Date()` internally), New Arrivals, and the `/books` / `/books/[id]` views are wrapped in `<Suspense>`. Any new data-reading component needs a `<Suspense>` fallback in the page that renders it.
 - `reactCompiler: true` (React Compiler) is enabled — do not add manual `memo`/`useMemo`/`useCallback` optimization.
 - **`next/image` only works for hosts allowlisted** in `next.config.ts` → `images.remotePatterns`. An unlisted host throws a **render-time crash** (`next-image-unconfigured-host`), not a load error, so `onError` can't catch it. Book covers come from arbitrary user-submitted CDNs, so the config has a catch-all `{ protocol: "https", hostname: "**" }` — don't remove it, and don't "fix" a cover crash by reverting to bare `<img>`.
 - Tailwind v4 with **no `tailwind.config`**: theme is CSS-first in `src/app/globals.css` (`@theme inline` + shadcn CSS variables). The pipeline is wired via the `@tailwindcss/turbopack` loader rule in `next.config.ts`.
