@@ -9,11 +9,11 @@ import {
 } from "@/app/components/social-icons";
 
 const socialLinks = [
-  { href: "https://facebook.com/booknook", label: "Facebook", Icon: FacebookIcon },
-  { href: "https://x.com/booknook", label: "X (Twitter)", Icon: XIcon },
-  { href: "https://instagram.com/booknook", label: "Instagram", Icon: InstagramIcon },
-  { href: "https://youtube.com/@booknook", label: "YouTube", Icon: YoutubeIcon },
-  { href: "https://linkedin.com/company/booknook", label: "LinkedIn", Icon: LinkedinIcon },
+  { href: "/", label: "Facebook", Icon: FacebookIcon },
+  { href: "/", label: "X (Twitter)", Icon: XIcon },
+  { href: "/", label: "Instagram", Icon: InstagramIcon },
+  { href: "/", label: "YouTube", Icon: YoutubeIcon },
+  { href: "/", label: "LinkedIn", Icon: LinkedinIcon },
 ];
 
 const contactInfo = [
@@ -78,7 +78,6 @@ export async function SiteFooter() {
               <a
                 key={label}
                 href={href}
-                target="_blank"
                 rel="noopener noreferrer"
                 aria-label={label}
                 className="inline-flex size-9 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"

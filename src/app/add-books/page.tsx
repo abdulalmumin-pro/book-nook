@@ -89,11 +89,30 @@ function Field({
 
 export default function AddBooksPage() {
   const [category, setCategory] = useState("Fiction");
+  const { data: session, isPending: sessionPending } = authClient.useSession();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = Object.fromEntries(new FormData(event.currentTarget));
     form.category = category;
+
+    // Ownership always comes from the signed-in account, never from a typed
+    // email — otherwise the book can't be matched back to this user on
+    // /my-books.
+    const userName = session?.user?.name ?? "";
+    const userEmail = session?.user?.email ?? "";
+
+    if (!userEmail) {
+      toast.add({
+        type: "error",
+        title: "Not signed in",
+        description: "Sign in again before adding a book.",
+      });
+      return;
+    }
+
+    form.userName = userName;
+    form.userEmail = userEmail;
     // TODO: send `data` to an API route / server action that saves the book
     // to MongoDB (file upload will need multipart/form-data handling).
 
@@ -140,7 +159,7 @@ export default function AddBooksPage() {
     }
 
     try {
-      const {data, error} = await authClient.token()
+      const { data } = await authClient.token()
       const token = data?.token
       
       const response = await fetch('http://localhost:7000/add-books', {
@@ -269,13 +288,16 @@ export default function AddBooksPage() {
             />
           </Field>
 
+          {/* Owner is always the signed-in account (see handleSubmit). */}
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="User Name" htmlFor="userName">
               <Input
                 id="userName"
                 name="userName"
-                placeholder="e.g. Jane Doe"
-                className={fieldFocus}
+                readOnly
+                value={session?.user?.name ?? ""}
+                placeholder={sessionPending ? "Loading account..." : "—"}
+                className={cn("bg-muted", fieldFocus)}
               />
             </Field>
             <Field label="User Email" htmlFor="userEmail">
@@ -283,8 +305,10 @@ export default function AddBooksPage() {
                 id="userEmail"
                 name="userEmail"
                 type="email"
-                placeholder="jane@example.com"
-                className={fieldFocus}
+                readOnly
+                value={session?.user?.email ?? ""}
+                placeholder={sessionPending ? "Loading account..." : "—"}
+                className={cn("bg-muted", fieldFocus)}
               />
             </Field>
           </div>
@@ -292,6 +316,7 @@ export default function AddBooksPage() {
           <Button
             type="submit"
             size="lg"
+            disabled={sessionPending}
             className="h-10 w-full bg-emerald-400 text-emerald-950 hover:bg-emerald-500"
           >
             Add Book

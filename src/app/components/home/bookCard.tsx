@@ -30,13 +30,23 @@ const BookCard = ({ book, showMeta = true }: BookCardProps) => {
 
         <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-amber-200/40 blur-2xl" />
 
-        <Image
-          src={book.image}
-          alt={book.title}
-          width={160}
-          height={190}
-          className="relative z-10 h-full w-auto max-w-full rounded-md object-contain shadow-md transition-transform duration-500 group-hover:scale-105"
-        />
+        {book.image ? (
+          <Image
+            src={book.image}
+            alt={book.title}
+            width={160}
+            height={190}
+            className="relative z-10 h-full w-auto max-w-full rounded-md object-contain shadow-md transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          // next/image throws on an empty src, and the Add Book form allows
+          // books without a cover — show an initial-based placeholder instead.
+          <div className="relative z-10 flex h-full w-28 items-center justify-center rounded-md bg-gradient-to-br from-[#174c3c] to-emerald-700 shadow-md">
+            <span className="font-serif text-4xl font-bold text-white/90">
+              {book.title.charAt(0).toUpperCase()}
+            </span>
+          </div>
+        )}
 
         {/* Category */}
         <span className="absolute left-3 top-3 z-20 rounded-full border border-white/60 bg-white/90 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#245b43] shadow-sm backdrop-blur-sm">
