@@ -38,7 +38,7 @@ async function BookDetails({
     const token = jwtToken?.token;
     console.log(token);
 
-    const res = await fetch(`http://localhost:7000/books/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books/${id}`, {
       headers: {
         authorization: `Bearer ${token}`
       },

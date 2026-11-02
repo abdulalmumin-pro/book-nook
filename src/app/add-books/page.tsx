@@ -131,7 +131,7 @@ export default function AddBooksPage() {
     });
 
     try {
-      const res = await fetch("http://localhost:7000/books", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books`, {
         cache: "no-store",
       });
 
@@ -162,7 +162,7 @@ export default function AddBooksPage() {
       const { data } = await authClient.token()
       const token = data?.token
       
-      const response = await fetch('http://localhost:7000/add-books', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/add-books`, {
         method: 'POST',
         headers:{
             "Content-Type" : "application/json",
@@ -201,8 +201,8 @@ export default function AddBooksPage() {
   return (
     <>
       {/* Page banner */}
-      <section className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 lg:px-8 bg-gray-300">
-        <div className="mx-auto w-full max-w-7xl px-4 py-12 text-center sm:px-6 lg:px-8">
+      <section className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-7xl px-4 py-4 text-center sm:px-6 lg:px-8">
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
             Add a Book
           </h1>

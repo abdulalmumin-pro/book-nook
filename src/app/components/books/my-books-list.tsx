@@ -9,7 +9,7 @@ import EditBooksDialog, {
 import { Button } from "@/app/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 
-const BACKEND_URL = "http://localhost:7000/books";
+const BACKEND_URL = `${process.env.NEXT_PUBLIC_API_URL}/books`;
 
 type Status = "loading" | "ready" | "error";
 

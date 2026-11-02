@@ -39,7 +39,7 @@ export type Book = {
   description?: string;
 };
 
-const API_URL = "http://localhost:7000";
+const API_URL = `${process.env.NEXT_PUBLIC_API_URL}`;
 
 const CATEGORIES = [
   "Fiction",
@@ -104,11 +104,11 @@ const EditBooksDialog = ({ book, onSaved }: EditBooksDialogProps) => {
     event.preventDefault();
 
     const form = Object.fromEntries(new FormData(event.currentTarget));
+
     const title = String(form.title ?? "").trim();
     const author = String(form.author ?? "").trim();
     const totalCopies = Number(form.totalCopies);
 
-    // ---- Validation ----
     if (!title || !author) {
       toast.add({
         type: "error",
@@ -122,7 +122,7 @@ const EditBooksDialog = ({ book, onSaved }: EditBooksDialogProps) => {
       toast.add({
         type: "error",
         title: "Invalid copies",
-        description: "Total copies must be a whole number of at least 1.",
+        description: "Total copies must be at least 1.",
       });
       return;
     }
@@ -136,44 +136,55 @@ const EditBooksDialog = ({ book, onSaved }: EditBooksDialogProps) => {
       description: String(form.description ?? "").trim(),
     };
 
-    // ---- Save ----
     setSaving(true);
+
     try {
+      // Get authentication token
       const { data } = await authClient.token();
 
+      if (!data?.token) {
+        throw new Error("Authentication token not found");
+      }
+
+      // Send updated book to Express backend
       const response = await fetch(`${API_URL}/books/${book.id}`, {
-        method: "PATCH", // change to PUT if your backend expects it
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          authorization: `Bearer ${data?.token}`,
+          Authorization: `Bearer ${data.token}`,
         },
         body: JSON.stringify(payload),
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        toast.add({
-          type: "error",
-          title: "Failed to update book",
-          description: "The server could not save your changes. Please try again.",
-        });
-        return;
+        throw new Error(result.message || "Failed to update book");
       }
+
+      // Update frontend with MongoDB response
+      onSaved?.({
+        ...book,
+        ...result.book,
+        id: String(result.book._id ?? result.book.id),
+      });
 
       toast.add({
         type: "success",
-        title: "Book updated",
+        title: "Book updated successfully!",
         description: `"${title}" has been updated.`,
       });
 
-      onSaved?.({ ...book, ...payload });
       setOpen(false);
       router.refresh();
     } catch (error) {
-      console.error(error);
+      console.error("Update error:", error);
+
       toast.add({
         type: "error",
-        title: "Something went wrong",
-        description: "Could not reach the server. Please try again.",
+        title: "Update failed",
+        description:
+          error instanceof Error ? error.message : "Could not update the book.",
       });
     } finally {
       setSaving(false);

@@ -1,3 +1,5 @@
+import { connection } from "next/server";
+
 /**
  * Full book shape required by the BookCard component. Matches the Express
  * backend's book records.
@@ -14,14 +16,15 @@ export interface BookCardData {
   userEmail: string;
 }
 
-const BACKEND_URL = "http://localhost:7000/books";
+const BACKEND_URL = `${process.env.NEXT_PUBLIC_API_URL}/books`;
 
 /**
  * Latest books, newest first. Reads from the same Express backend that the
  * Add Book form and /books page use, so newly added books show up here
  * immediately. Fresh on every request (not cached).
  */
-export async function getLatestBooks(limit = 6): Promise<BookCardData[]> {
+ export async function getLatestBooks(limit = 6): Promise<BookCardData[]> {
+  await connection();
   try {
     const res = await fetch(BACKEND_URL, { cache: "no-store" });
 

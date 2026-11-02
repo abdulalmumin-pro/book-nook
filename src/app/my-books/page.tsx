@@ -43,7 +43,7 @@ type Book = {
 
 type Status = "loading" | "error" | "ready";
 
-const API_URL = "http://localhost:7000";
+const API_URL = `${process.env.NEXT_PUBLIC_API_URL}`;
 
 const CATEGORIES = [
   "Fiction",
