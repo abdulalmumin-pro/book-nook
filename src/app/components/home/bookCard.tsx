@@ -22,6 +22,9 @@ interface BookCardProps {
 }
 
 const BookCard = ({ book, showMeta = true }: BookCardProps) => {
+  const copies = Number(book.totalCopies);
+  const available = Number.isFinite(copies) && copies > 0;
+
   return (
     <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#e8e5dc] bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-emerald-200 hover:shadow-[0_15px_35px_rgba(23,76,60,0.12)]">
       {/* Book Image */}
@@ -80,8 +83,14 @@ const BookCard = ({ book, showMeta = true }: BookCardProps) => {
                 Total Copies
               </span>
 
-              <span className="rounded-md bg-[#dcece2] px-2.5 py-1 text-xs font-bold text-[#176344]">
-                {book.totalCopies}
+              <span
+                className={
+                  available
+                    ? "rounded-md bg-[#dcece2] px-2.5 py-1 text-xs font-bold text-[#176344]"
+                    : "rounded-md bg-[#fbeae6] px-2.5 py-1 text-xs font-bold text-[#9b3a2b]"
+                }
+              >
+                {available ? book.totalCopies : "Not Available"}
               </span>
             </div>
 

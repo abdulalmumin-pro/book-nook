@@ -113,6 +113,21 @@ export default function AddBooksPage() {
 
     form.userName = userName;
     form.userEmail = userEmail;
+
+    const totalCopies = Number(form.totalCopies);
+
+    if (!Number.isInteger(totalCopies) || totalCopies < 1) {
+      toast.add({
+        type: "error",
+        title: "Invalid copies",
+        description: "Total copies must be a whole number of at least 1.",
+      });
+      return;
+    }
+
+    // The backend stores this as a number so borrow/return can use $inc.
+    form.totalCopies = String(totalCopies);
+
     // TODO: send `data` to an API route / server action that saves the book
     // to MongoDB (file upload will need multipart/form-data handling).
 
@@ -263,6 +278,8 @@ export default function AddBooksPage() {
                 name="totalCopies"
                 type="number"
                 min={1}
+                step={1}
+                required
                 defaultValue={1}
                 className={fieldFocus}
               />

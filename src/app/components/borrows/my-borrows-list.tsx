@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -16,40 +15,128 @@ import { toast } from "@/app/components/ui/toast";
 import { authClient } from "@/lib/auth-client";
 import {
   BORROWS_CHANGED_EVENT,
-  getBorrowsForUser,
-  removeBorrow,
+  fetchBorrows,
+  returnBook,
   type BorrowRecord,
 } from "@/lib/borrows";
+
+function formatDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function Cover({
+  record,
+  className,
+}: {
+  record: BorrowRecord;
+  className: string;
+}) {
+  if (record.image) {
+    return (
+      <Image
+        src={record.image}
+        alt={`Cover of ${record.title}`}
+        width={48}
+        height={64}
+        className={className}
+      />
+    );
+  }
+
+  return (
+    <div
+      className={`${className} flex items-center justify-center bg-[#e3eee5] font-semibold text-[#286044]`}
+      aria-hidden
+    >
+      {record.title.charAt(0).toUpperCase()}
+    </div>
+  );
+}
 
 const MyBorrowsList = () => {
   const { data: session, isPending } = authClient.useSession();
   const [borrows, setBorrows] = useState<BorrowRecord[]>([]);
-  const userEmail = session?.user?.email;
+  const [loading, setLoading] = useState(true);
+  const [returningId, setReturningId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isPending) return;
 
-    const sync = () => setBorrows(getBorrowsForUser(userEmail));
+    if (!session?.user?.email) {
+      return;
+    }
 
-    sync();
+    let active = true;
 
-    window.addEventListener(BORROWS_CHANGED_EVENT, sync);
+    const loadBorrows = async () => {
+      try {
+        const records = await fetchBorrows();
+        if (active) setBorrows(records);
+      } catch (error) {
+        console.error("[my-borrows] Failed to load borrows:", error);
+        if (!active) return;
 
-    return () =>
-      window.removeEventListener(BORROWS_CHANGED_EVENT, sync);
-  }, [isPending, userEmail]);
+        toast.add({
+          type: "error",
+          title: "Could not load your borrows",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Please check the library server and try again.",
+        });
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
 
-  const handleReturn = (record: BorrowRecord) => {
-    removeBorrow(record.id);
+    loadBorrows();
 
-    toast.add({
-      type: "success",
-      title: "Book returned",
-      description: `"${record.title}" was returned to the library.`,
-    });
+    window.addEventListener(BORROWS_CHANGED_EVENT, loadBorrows);
+
+    return () => {
+      active = false;
+      window.removeEventListener(BORROWS_CHANGED_EVENT, loadBorrows);
+    };
+  }, [isPending, session?.user?.email]);
+
+  const handleReturn = async (record: BorrowRecord) => {
+    setReturningId(record.bookId);
+
+    try {
+      await returnBook(record.bookId);
+
+      setBorrows((prev) =>
+        prev.filter((item) => item.bookId !== record.bookId)
+      );
+
+      toast.add({
+        type: "success",
+        title: "Book returned",
+        description: `"${record.title}" was returned to the library.`,
+      });
+    } catch (error) {
+      toast.add({
+        type: "error",
+        title: "Could not return book",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Something went wrong. Please try again.",
+      });
+    } finally {
+      setReturningId(null);
+    }
   };
 
-  if (isPending) {
+  if (isPending || loading) {
     return (
       <div className="space-y-3 rounded-xl border border-border bg-background p-4 sm:p-6">
         {Array.from({ length: 3 }).map((_, index) => (
@@ -86,11 +173,8 @@ const MyBorrowsList = () => {
             className="flex flex-col gap-4 rounded-xl border border-border bg-background p-4 shadow-sm"
           >
             <div className="flex min-w-0 items-center gap-3">
-              <Image
-                src={record.image}
-                alt={`Cover of ${record.title}`}
-                width={48}
-                height={64}
+              <Cover
+                record={record}
                 className="h-16 w-12 shrink-0 rounded object-cover"
               />
 
@@ -107,7 +191,7 @@ const MyBorrowsList = () => {
                   Borrow Date
                 </p>
                 <p className="mt-1 break-words text-sm font-medium text-foreground">
-                  {record.borrowDate}
+                  {formatDate(record.borrowDate)}
                 </p>
               </div>
 
@@ -116,7 +200,7 @@ const MyBorrowsList = () => {
                   Return Date
                 </p>
                 <p className="mt-1 break-words text-sm font-medium text-foreground">
-                  {record.returnDate}
+                  {formatDate(record.returnDate)}
                 </p>
               </div>
             </div>
@@ -125,9 +209,10 @@ const MyBorrowsList = () => {
               variant="outline"
               size="sm"
               onClick={() => handleReturn(record)}
+              disabled={returningId === record.bookId}
               className="w-full"
             >
-              Return Book
+              {returningId === record.bookId ? "Returning..." : "Return Book"}
             </Button>
           </div>
         ))}
@@ -150,11 +235,8 @@ const MyBorrowsList = () => {
             {borrows.map((record) => (
               <TableRow key={record.id}>
                 <TableCell className="py-3">
-                  <Image
-                    src={record.image}
-                    alt={`Cover of ${record.title}`}
-                    width={32}
-                    height={44}
+                  <Cover
+                    record={record}
                     className="h-11 w-8 rounded object-cover"
                   />
                 </TableCell>
@@ -164,11 +246,11 @@ const MyBorrowsList = () => {
                 </TableCell>
 
                 <TableCell className="whitespace-nowrap text-muted-foreground">
-                  {record.borrowDate}
+                  {formatDate(record.borrowDate)}
                 </TableCell>
 
                 <TableCell className="whitespace-nowrap text-muted-foreground">
-                  {record.returnDate}
+                  {formatDate(record.returnDate)}
                 </TableCell>
 
                 <TableCell className="text-right">
@@ -176,8 +258,11 @@ const MyBorrowsList = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => handleReturn(record)}
+                    disabled={returningId === record.bookId}
                   >
-                    Return Book
+                    {returningId === record.bookId
+                      ? "Returning..."
+                      : "Return Book"}
                   </Button>
                 </TableCell>
               </TableRow>

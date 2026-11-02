@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/app/components/ui/button";
 import {
   Dialog,
@@ -15,7 +16,7 @@ import { Label } from "@/app/components/ui/label";
 import { toast } from "@/app/components/ui/toast";
 import type { Book } from "@/app/components/home/bookCard";
 import { authClient } from "@/lib/auth-client";
-import { saveBorrow } from "@/lib/borrows";
+import { BorrowApiError, borrowBook } from "@/lib/borrows";
 
 interface BorrowBookDialogProps {
   book: Book;
@@ -23,61 +24,75 @@ interface BorrowBookDialogProps {
 
 const LOAN_PERIOD_DAYS = 7;
 
-function formatDate(date: Date) {
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
 /**
  * "Borrow This Book" trigger + confirmation dialog. The borrower's name and
- * email are read-only and come from the signed-in session. Confirming stores
- * the borrow in the shared localStorage layer (see src/lib/borrows.ts) so it
- * shows up on the My Borrows page.
+ * email are read-only and come from the signed-in session. Confirming calls the
+ * JWT-protected backend, which decrements the stock with $inc and rejects a
+ * duplicate active borrow.
  */
 const BorrowBookDialog = ({ book }: BorrowBookDialogProps) => {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const { data: session } = authClient.useSession();
   const user = session?.user;
 
-  const handleConfirm = () => {
-    if (!user) return;
+  const copies = Number(book.totalCopies);
+  const available = Number.isFinite(copies) && copies > 0;
 
-    const borrowedOn = new Date();
-    const dueBack = new Date(
-      borrowedOn.getTime() + LOAN_PERIOD_DAYS * 24 * 60 * 60 * 1000
-    );
+  const handleConfirm = async () => {
+    if (!user) {
+      toast.add({
+        type: "error",
+        title: "Not signed in",
+        description: "Sign in again before borrowing a book.",
+      });
+      return;
+    }
 
-    saveBorrow({
-      id: book._id,
-      title: book.title,
-      image: book.image,
-      borrowDate: formatDate(borrowedOn),
-      returnDate: formatDate(dueBack),
-      userEmail: user.email ?? "",
-    });
+    setSubmitting(true);
 
-    toast.add({
-      type: "success",
-      title: "Book borrowed",
-      description: `You can keep "${book.title}" for ${LOAN_PERIOD_DAYS} days.`,
-    });
-    setOpen(false);
+    try {
+      await borrowBook(book._id);
+
+      toast.add({
+        type: "success",
+        title: "Book borrowed",
+        description: `You can keep "${book.title}" for ${LOAN_PERIOD_DAYS} days.`,
+      });
+
+      setOpen(false);
+      router.refresh();
+    } catch (error) {
+      const alreadyBorrowed =
+        error instanceof BorrowApiError && error.code === "ALREADY_BORROWED";
+
+      toast.add({
+        type: "error",
+        title: alreadyBorrowed ? "Already borrowed" : "Could not borrow book",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Something went wrong. Please try again.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
+        disabled={!available}
         render={
           <Button
             size="lg"
-            className="w-full bg-gradient-to-r from-[#174c3c] to-emerald-700 text-white hover:from-emerald-700 hover:to-[#174c3c] md:w-auto"
+            disabled={!available}
+            className="w-full bg-gradient-to-r from-[#174c3c] to-emerald-700 text-white hover:from-emerald-700 hover:to-[#174c3c] disabled:cursor-not-allowed md:w-auto"
           />
         }
       >
-        Borrow This Book
+        {available ? "Borrow This Book" : "Not Available"}
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md">
@@ -113,10 +128,10 @@ const BorrowBookDialog = ({ book }: BorrowBookDialogProps) => {
         <div className="flex justify-end">
           <Button
             onClick={handleConfirm}
-            disabled={!user}
+            disabled={!user || submitting || !available}
             className="bg-emerald-600 text-white hover:bg-emerald-700"
           >
-            Confirm Borrow
+            {submitting ? "Borrowing..." : "Confirm Borrow"}
           </Button>
         </div>
       </DialogContent>

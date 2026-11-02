@@ -67,6 +67,9 @@ async function BookDetails({
     );
   }
 
+  const copies = Number(book.totalCopies);
+  const available = Number.isFinite(copies) && copies > 0;
+
   return (
     <article className="overflow-hidden rounded-2xl border border-[#e8e5dc] bg-white shadow-sm">
       <div className="grid gap-8 p-6 md:grid-cols-[320px_1fr] md:p-8">
@@ -105,10 +108,16 @@ async function BookDetails({
           </p>
 
           <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
-            <span className="rounded-md bg-[#dcece2] px-2.5 py-1 text-xs font-bold text-[#176344]">
-              {book.totalCopies}
+            <span
+              className={
+                available
+                  ? "rounded-md bg-[#dcece2] px-2.5 py-1 text-xs font-bold text-[#176344]"
+                  : "rounded-md bg-[#fbeae6] px-2.5 py-1 text-xs font-bold text-[#9b3a2b]"
+              }
+            >
+              {available ? copies : "Not Available"}
             </span>
-            copies available
+            {available ? "copies available" : "all copies are currently borrowed"}
           </div>
 
           <h2 className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-[#62816d]">
