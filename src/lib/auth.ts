@@ -19,7 +19,7 @@ function getMongoClient(): MongoClient {
     {
       // Fail fast instead of blocking the request for the default 30s.
       serverSelectionTimeoutMS: 5000,
-    }
+    },
   );
   return globalWithMongo._mongoClient;
 }
@@ -34,12 +34,19 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    },
+  },
+
   plugins: [jwt()],
   session: {
     cookieCache: {
       enabled: true,
-      strategy: 'jwt',
-      maxAge: 7 * 24 * 60 * 60
-    }
-  }
+      strategy: "jwt",
+      maxAge: 7 * 24 * 60 * 60,
+    },
+  },
 });

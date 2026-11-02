@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/app/components/ui/button";
@@ -63,6 +62,25 @@ export default function SignUpForm() {
     });
   };
 
+  const handleGoogleSignUp = async () => {
+    try {
+      const { error } = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
+
+      if (error) {
+        toast.add({
+          type: "error",
+          title: "Google Sign In Failed",
+          description: error.message,
+        });
+      }
+    } catch (error) {
+      console.error("Google Sign In Error:", error);
+    }
+  };
+
   return (
     <div className="w-full max-w-md mx-auto px-4 py-8 sm:py-12">
       <Card className="w-full">
@@ -70,16 +88,15 @@ export default function SignUpForm() {
           <CardTitle className="text-2xl font-bold">
             Create an account
           </CardTitle>
-          <CardDescription>
-            Sign up with your Google account
-          </CardDescription>
+          <CardDescription>Sign up with your Google account</CardDescription>
         </CardHeader>
 
         <CardContent>
           <form onSubmit={handleSignUp}>
             <FieldGroup>
               <Field>
-                <Button variant="outline" type="button" className="w-full">
+                <Button onClick={handleGoogleSignUp}
+                 variant="outline" type="button" className="w-full">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"

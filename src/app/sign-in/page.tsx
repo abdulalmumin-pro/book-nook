@@ -52,21 +52,43 @@ export default function SignInForm() {
     router.push("/");
   };
 
+  const handleGoogleSignIn = async () => {
+    try {
+      const { error } = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
+
+      if (error) {
+        toast.add({
+          type: "error",
+          title: "Google Sign In Failed",
+          description: error.message,
+        });
+      }
+    } catch (error) {
+      console.error("Google Sign In Error:", error);
+    }
+  };
+
   return (
     <div className="w-full max-w-md mx-auto px-4 py-8 sm:py-12">
       <Card className="w-full">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
-          <CardDescription>
-            Sign in with your Google account
-          </CardDescription>
+          <CardDescription>Sign in with your Google account</CardDescription>
         </CardHeader>
 
         <CardContent>
           <form onSubmit={handleSignIn}>
             <FieldGroup>
               <Field>
-                <Button variant="outline" type="button" className="w-full">
+                <Button
+                  onClick={handleGoogleSignIn}
+                  variant="outline"
+                  type="button"
+                  className="w-full"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"

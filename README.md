@@ -4,7 +4,7 @@
 
 ## 🔗 Live Site
 
-**Client:** https://your-booknook-site.vercel.app
+**Client:** https://book-nook-frontend-seven.vercel.app
 
 > Replace the URL above with your deployed client-side link.
 
