@@ -13,6 +13,7 @@ import {
 } from "@/app/components/ui/select";
 import { toast } from "@/app/components/ui/toast";
 import { cn } from "@/lib/utils";
+import { authClient } from "@/lib/auth-client";
 
 const categories = [
   "Fiction",
@@ -139,10 +140,14 @@ export default function AddBooksPage() {
     }
 
     try {
+      const {data, error} = await authClient.token()
+      const token = data?.token
+      
       const response = await fetch('http://localhost:7000/add-books', {
         method: 'POST',
         headers:{
-            "Content-Type" : "application/json" 
+            "Content-Type" : "application/json",
+            authorization: `Bearer ${token}`
         },
         body: JSON.stringify(form)
       })
@@ -156,8 +161,8 @@ export default function AddBooksPage() {
         return;
       }
 
-      const data = await response.json();
-      console.log(data);
+      const result = await response.json();
+      console.log(result);
 
       toast.add({
         type: "success",
